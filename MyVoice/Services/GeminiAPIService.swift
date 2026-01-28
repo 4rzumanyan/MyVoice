@@ -69,18 +69,22 @@ final class GeminiAPIService {
     ///   - model: The Gemini model to use for transcription
     /// - Returns: TranscriptionResult with the transcribed text
     func transcribe(audioFileURL: URL, apiKey: String, model: GeminiModel) async throws -> TranscriptionResult {
+        let totalStart = CFAbsoluteTimeGetCurrent()
+        
         // Validate API key
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw GeminiError.missingAPIKey
         }
         
         // Read audio file
+        var stepStart = CFAbsoluteTimeGetCurrent()
         let audioData: Data
         do {
             audioData = try Data(contentsOf: audioFileURL)
         } catch {
             throw GeminiError.invalidAudioFile
         }
+        print("[GeminiAPI] Read audio file: \(Int((CFAbsoluteTimeGetCurrent() - stepStart) * 1000))ms, size: \(audioData.count / 1024)KB")
         
         // Check file size
         guard audioData.count <= maxFileSizeBytes else {
@@ -88,7 +92,9 @@ final class GeminiAPIService {
         }
         
         // Encode to base64
+        stepStart = CFAbsoluteTimeGetCurrent()
         let base64Audio = audioData.base64EncodedString()
+        print("[GeminiAPI] Base64 encode: \(Int((CFAbsoluteTimeGetCurrent() - stepStart) * 1000))ms, size: \(base64Audio.count / 1024)KB")
         
         // Build request
         let endpoint = "\(baseURL)/\(model.apiModelId):generateContent?key=\(apiKey)"
@@ -101,6 +107,7 @@ final class GeminiAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Build request body
+        stepStart = CFAbsoluteTimeGetCurrent()
         let requestBody = GeminiRequest(
             contents: [
                 GeminiContent(
@@ -123,13 +130,16 @@ final class GeminiAPIService {
         
         let encoder = JSONEncoder()
         request.httpBody = try encoder.encode(requestBody)
+        print("[GeminiAPI] Build request: \(Int((CFAbsoluteTimeGetCurrent() - stepStart) * 1000))ms, body: \(request.httpBody?.count ?? 0 / 1024)KB")
         
         // Make request with error handling
+        stepStart = CFAbsoluteTimeGetCurrent()
         let data: Data
         let response: URLResponse
         
         do {
             (data, response) = try await URLSession.shared.data(for: request)
+            print("[GeminiAPI] API request: \(Int((CFAbsoluteTimeGetCurrent() - stepStart) * 1000))ms")
         } catch let error as URLError {
             switch error.code {
             case .notConnectedToInternet, .networkConnectionLost:
@@ -194,6 +204,9 @@ final class GeminiAPIService {
               let text = part.text else {
             throw GeminiError.invalidResponse
         }
+        
+        let totalTime = Int((CFAbsoluteTimeGetCurrent() - totalStart) * 1000)
+        print("[GeminiAPI] Total transcription time: \(totalTime)ms")
         
         return TranscriptionResult(
             text: text.trimmingCharacters(in: .whitespacesAndNewlines),

@@ -19,6 +19,10 @@ final class AudioRecorderService: ObservableObject {
     private var recordingStartTime: Date?
     private var durationTimer: Timer?
     
+    // MARK: - Audio Configuration
+    /// Target sample rate for speech transcription (16kHz is optimal for speech)
+    private let targetSampleRate: Double = 16000.0
+    
     // MARK: - Public Methods
     
     /// Start recording audio to a temporary WAV file
@@ -49,10 +53,12 @@ final class AudioRecorderService: ObservableObject {
             throw RecordingError.formatCreationFailed
         }
         
-        // Create audio file with standard WAV format for better compatibility
+        // Create audio file with optimized WAV format for speech transcription
+        // Using 16kHz sample rate significantly reduces file size while maintaining
+        // excellent quality for speech recognition (speech is typically 300Hz-3400Hz)
         let wavSettings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatLinearPCM),
-            AVSampleRateKey: recordingFormat.sampleRate,
+            AVSampleRateKey: targetSampleRate,  // 16kHz instead of device rate (48kHz)
             AVNumberOfChannelsKey: 1, // Mono
             AVLinearPCMBitDepthKey: 16,
             AVLinearPCMIsFloatKey: false,
@@ -65,7 +71,9 @@ final class AudioRecorderService: ObservableObject {
             throw RecordingError.formatCreationFailed
         }
         
-        // Create converter from input format to file format
+        print("[AudioRecorder] Input: \(Int(recordingFormat.sampleRate))Hz -> Output: \(Int(outputFormat.sampleRate))Hz")
+        
+        // Create converter from input format to file format (handles sample rate conversion)
         guard let converter = AVAudioConverter(from: recordingFormat, to: outputFormat) else {
             throw RecordingError.converterCreationFailed
         }
@@ -99,6 +107,13 @@ final class AudioRecorderService: ObservableObject {
         
         isRecording = false
         audioLevel = 0.0
+        
+        // Log file size for debugging
+        if let url = tempFileURL,
+           let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let size = attrs[.size] as? Int {
+            print("[AudioRecorder] Recording saved: \(size / 1024)KB, duration: \(String(format: "%.1f", recordingDuration))s")
+        }
         
         return tempFileURL
     }
