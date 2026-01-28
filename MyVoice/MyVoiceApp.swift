@@ -35,8 +35,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var viewModel: AppViewModel!
     private var cancellables = Set<AnyCancellable>()
     
-    /// Track if onboarding has been completed this session
-    private var hasCompletedOnboarding = false
     
     nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
@@ -60,78 +58,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 window.close()
             }
         }
-        
-        // Check if we need to show onboarding
+
+        // Show onboarding if permissions are missing
         checkAndShowOnboardingIfNeeded()
     }
-    
+
     // MARK: - Onboarding
-    
+
     private func checkAndShowOnboardingIfNeeded() {
         let permissions = PermissionsService.shared
-        
-        // Show onboarding if accessibility permission is not granted
-        // This is critical for global shortcuts to work
-        if permissions.accessibilityPermission != .granted {
+        if permissions.microphonePermission != .granted || permissions.accessibilityPermission != .granted {
             showOnboarding()
         }
     }
-    
+
     private func showOnboarding() {
-        // Create onboarding window if needed
         if onboardingWindowController == nil {
             let onboardingView = OnboardingView(permissions: PermissionsService.shared) { [weak self] in
                 self?.dismissOnboarding()
             }
             let hostingController = NSHostingController(rootView: onboardingView)
-            
+
             let window = NSWindow(contentViewController: hostingController)
             window.title = "Welcome to MyVoice"
             window.styleMask = [.titled, .closable]
-            window.setContentSize(NSSize(width: 450, height: 550))
+            window.setContentSize(NSSize(width: 520, height: 560))
             window.center()
             window.isReleasedWhenClosed = false
-            
-            // Make it a floating panel so it stays on top
             window.level = .floating
-            
+
             onboardingWindowController = NSWindowController(window: window)
         }
-        
-        // Show the window
+
         onboardingWindowController?.showWindow(nil)
         onboardingWindowController?.window?.makeKeyAndOrderFront(nil)
-        
-        // Activate app to bring window to front
         NSApp.activate(ignoringOtherApps: true)
     }
-    
+
     private func dismissOnboarding() {
-        hasCompletedOnboarding = true
         onboardingWindowController?.close()
-        
-        // Refresh hotkey monitors now that permissions may have changed
         viewModel.hotkeyService.refreshMonitors()
-        
-        // If accessibility still not granted, show a reminder in the menu bar
-        if PermissionsService.shared.accessibilityPermission != .granted {
-            showPermissionReminder()
-        }
-    }
-    
-    private func showPermissionReminder() {
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Permission Required"
-        alert.informativeText = "Global keyboard shortcuts won't work until you grant Accessibility permission in System Settings.\n\nThe shortcut will only work when the MyVoice menu is open."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-        
-        let response = alert.runModal()
-        
-        if response == .alertFirstButtonReturn {
-            PermissionsService.shared.requestAccessibilityPermission()
-        }
     }
     
     // MARK: - Setup

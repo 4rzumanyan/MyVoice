@@ -4,40 +4,24 @@ import SwiftUI
 struct OnboardingView: View {
     @ObservedObject var permissions: PermissionsService
     var onComplete: () -> Void
-    
+
     @State private var isCheckingPermissions = false
-    
+
     var body: some View {
         VStack(spacing: 24) {
-            // Header
-            VStack(spacing: 12) {
-                Image(systemName: "mic.badge.xmark")
-                    .font(.system(size: 64))
-                    .foregroundColor(.accentColor)
-                
-                Text("Welcome to MyVoice")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Voice-to-text transcription with push-to-talk")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.top, 20)
-            
-            Divider()
-                .padding(.horizontal, 40)
-            
-            // Permissions section
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Required Permissions")
+            header
+
+            infoBanner
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Enable Permissions")
                     .font(.headline)
-                
-                // Microphone permission
-                PermissionItemView(
+
+                PermissionStepView(
+                    step: "1",
                     icon: "mic.fill",
-                    title: "Microphone Access",
-                    description: "Required to record your voice for transcription",
+                    title: "Microphone",
+                    description: "Allows MyVoice to record your voice for transcription.",
                     status: permissions.microphonePermission,
                     actionTitle: permissions.microphonePermission == .unknown ? "Grant Access" : "Open Settings",
                     action: {
@@ -48,12 +32,12 @@ struct OnboardingView: View {
                         }
                     }
                 )
-                
-                // Accessibility permission
-                PermissionItemView(
+
+                PermissionStepView(
+                    step: "2",
                     icon: "accessibility",
-                    title: "Accessibility Access",
-                    description: "Required for global keyboard shortcuts to work anywhere on your Mac",
+                    title: "Accessibility",
+                    description: "Enables global shortcuts and auto‑paste into other apps.",
                     status: permissions.accessibilityPermission,
                     actionTitle: "Open System Settings",
                     action: {
@@ -62,90 +46,130 @@ struct OnboardingView: View {
                     isRequired: true
                 )
             }
-            .padding(.horizontal, 30)
-            
+            .padding(.horizontal, 28)
+
             Spacer()
-            
-            // Status message
+
             statusMessage
-            
-            // Continue button
-            VStack(spacing: 12) {
-                Button(action: {
-                    if allRequiredPermissionsGranted {
-                        onComplete()
-                    } else {
-                        isCheckingPermissions = true
-                        permissions.checkPermissions()
-                        
-                        // Reset after a moment
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                            isCheckingPermissions = false
-                        }
-                    }
-                }) {
-                    HStack {
-                        if isCheckingPermissions {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                                .frame(width: 16, height: 16)
-                        }
-                        Text(allRequiredPermissionsGranted ? "Get Started" : "Check Permissions")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isCheckingPermissions)
-                
-                if !allRequiredPermissionsGranted {
-                    Button("Skip for Now") {
-                        onComplete()
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-                }
-            }
-            .padding(.horizontal, 30)
-            .padding(.bottom, 24)
+
+            actions
         }
-        .frame(width: 450, height: 550)
+        .frame(width: 520, height: 560)
         .background(Color(NSColor.windowBackgroundColor))
     }
-    
+
+    private var header: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 64, height: 64)
+                Image(systemName: "mic.waveform")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundColor(.accentColor)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Welcome to MyVoice")
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("Grant permissions to start recording with global shortcuts.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(.top, 18)
+        .padding(.horizontal, 28)
+    }
+
+    private var infoBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "info.circle.fill")
+                .foregroundColor(.accentColor)
+            Text("You can change permissions later in Settings → Privacy & Security.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 28)
+    }
+
+    private var actions: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                if allRequiredPermissionsGranted {
+                    onComplete()
+                } else {
+                    isCheckingPermissions = true
+                    permissions.checkPermissions()
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        isCheckingPermissions = false
+                    }
+                }
+            }) {
+                HStack {
+                    if isCheckingPermissions {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .frame(width: 16, height: 16)
+                    }
+                    Text(allRequiredPermissionsGranted ? "Start Using MyVoice" : "Check Permissions")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isCheckingPermissions)
+
+            if !allRequiredPermissionsGranted {
+                Button("Skip for Now") {
+                    onComplete()
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+                .font(.caption)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.bottom, 24)
+    }
+
     private var allRequiredPermissionsGranted: Bool {
         permissions.microphonePermission == .granted &&
         permissions.accessibilityPermission == .granted
     }
-    
+
     @ViewBuilder
     private var statusMessage: some View {
         if allRequiredPermissionsGranted {
             HStack {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-                Text("All permissions granted! You're ready to go.")
+                Text("All set. You can start recording now.")
                     .foregroundColor(.green)
             }
             .font(.subheadline)
-            .padding(.horizontal, 30)
+            .padding(.horizontal, 28)
         } else {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.orange)
-                Text("Please grant the required permissions above")
+                Text("Permissions are required for global shortcuts to work.")
                     .foregroundColor(.secondary)
             }
             .font(.subheadline)
-            .padding(.horizontal, 30)
+            .padding(.horizontal, 28)
         }
     }
 }
 
-// MARK: - Permission Item View
+// MARK: - Permission Step View
 
-struct PermissionItemView: View {
+struct PermissionStepView: View {
+    let step: String
     let icon: String
     let title: String
     let description: String
@@ -153,26 +177,31 @@ struct PermissionItemView: View {
     var actionTitle: String = "Grant"
     let action: () -> Void
     var isRequired: Bool = false
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            // Icon
             ZStack {
                 Circle()
                     .fill(statusColor.opacity(0.15))
                     .frame(width: 44, height: 44)
-                
                 Image(systemName: icon)
                     .font(.system(size: 20))
                     .foregroundColor(statusColor)
             }
-            
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text("Step \(step)")
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.secondary.opacity(0.15))
+                        .foregroundColor(.secondary)
+                        .cornerRadius(4)
+
                     Text(title)
                         .font(.headline)
-                    
+
                     if isRequired {
                         Text("Required")
                             .font(.caption2)
@@ -182,17 +211,17 @@ struct PermissionItemView: View {
                             .foregroundColor(.red)
                             .cornerRadius(4)
                     }
-                    
+
                     Spacer()
-                    
+
                     statusBadge
                 }
-                
+
                 Text(description)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 if status != .granted {
                     Button(actionTitle) {
                         action()
@@ -207,7 +236,7 @@ struct PermissionItemView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
     }
-    
+
     private var statusColor: Color {
         switch status {
         case .granted:
@@ -218,7 +247,7 @@ struct PermissionItemView: View {
             return .orange
         }
     }
-    
+
     @ViewBuilder
     private var statusBadge: some View {
         HStack(spacing: 4) {
@@ -228,7 +257,7 @@ struct PermissionItemView: View {
         .font(.caption)
         .foregroundColor(statusColor)
     }
-    
+
     private var statusIcon: String {
         switch status {
         case .granted:
@@ -239,7 +268,7 @@ struct PermissionItemView: View {
             return "questionmark.circle.fill"
         }
     }
-    
+
     private var statusText: String {
         switch status {
         case .granted:
