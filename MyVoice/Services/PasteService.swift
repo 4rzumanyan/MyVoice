@@ -61,34 +61,18 @@ final class PasteService {
         guard !text.isEmpty else {
             throw PasteError.emptyText
         }
-
-        if behavior.shouldAutoPaste {
-            // Preserve existing clipboard, try to paste without leaving residue
-            let previousClipboard = getClipboardText()
-
-            // Copy text temporarily to enable Cmd+V paste
-            copyToClipboard(text)
-
-            do {
-                Thread.sleep(forTimeInterval: 0.05)
-                try simulatePaste()
-
-                // Restore previous clipboard after a successful paste
-                if let previousClipboard = previousClipboard {
-                    copyToClipboard(previousClipboard)
-                }
-            } catch {
-                // If paste fails, keep the text in clipboard as fallback
-                copyToClipboard(text)
-                throw error
-            }
-
-            return
-        }
-
+        
         // Copy to clipboard if needed
-        if behavior.shouldCopyToClipboard {
+        if behavior.shouldCopyToClipboard || behavior.shouldAutoPaste {
+            // Always copy first if we're going to paste
             copyToClipboard(text)
+        }
+        
+        // Simulate paste if needed
+        if behavior.shouldAutoPaste {
+            // Small delay to ensure clipboard is ready
+            Thread.sleep(forTimeInterval: 0.05)
+            try simulatePaste()
         }
     }
     
