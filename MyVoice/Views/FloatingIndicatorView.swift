@@ -8,39 +8,67 @@ struct FloatingIndicatorView: View {
     @State private var pulseAnimation = false
     
     var body: some View {
-        HStack(spacing: 8) {
-            // Pulsing indicator dot
-            Circle()
-                .fill(indicatorColor)
-                .frame(width: 10, height: 10)
-                .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                .opacity(pulseAnimation ? 0.7 : 1.0)
-            
-            // Status text
-            Group {
-                if viewModel.recordingState.isRecording {
+        HStack(spacing: 12) {
+            if viewModel.recordingState.isRecording {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(indicatorColor)
+                        .frame(width: 18, height: 18)
+                        .scaleEffect(pulseAnimation ? 1.2 : 1.0)
+                        .opacity(pulseAnimation ? 0.7 : 1.0)
+
                     HStack(spacing: 4) {
                         Text("Recording")
-                        Text(formatDuration(viewModel.audioRecorder.recordingDuration))
+                        Text(formatDuration(viewModel.recordingDuration))
                             .fontWeight(.medium)
                     }
-                } else if viewModel.recordingState.isProcessing {
-                    HStack(spacing: 6) {
-                        ProgressView()
-                            .scaleEffect(0.6)
-                        Text("Transcribing...")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
+
+                    Button {
+                        viewModel.cancelRecording()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(Color.gray.opacity(0.85))
+                            .font(.system(size: 21, weight: .semibold))
+                            .frame(width: 18, height: 18, alignment: .center)
                     }
+                    .buttonStyle(.plain)
+                    .help("Cancel recording")
                 }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.85))
+                )
+            } else if viewModel.recordingState.isProcessing {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(indicatorColor)
+                        .frame(width: 18, height: 18)
+                        .scaleEffect(pulseAnimation ? 1.2 : 1.0)
+                        .opacity(pulseAnimation ? 0.7 : 1.0)
+
+                    Text("Transcribing...")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white)
+
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .frame(width: 18, height: 18, alignment: .center)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.85))
+                )
             }
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(.white)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            Capsule()
-                .fill(Color.black.opacity(0.8))
-        )
+        .frame(width: 260, alignment: .center)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
         .onAppear {
             withAnimation(
@@ -48,6 +76,16 @@ struct FloatingIndicatorView: View {
                 .repeatForever(autoreverses: true)
             ) {
                 pulseAnimation = true
+            }
+        }
+        .onChange(of: viewModel.recordingState) { _ in
+            if !pulseAnimation {
+                withAnimation(
+                    .easeInOut(duration: 0.8)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    pulseAnimation = true
+                }
             }
         }
     }
@@ -80,10 +118,10 @@ final class FloatingIndicatorWindowController: NSWindowController {
         self.init(window: window)
         
         let hostingView = NSHostingView(rootView: FloatingIndicatorView(viewModel: viewModel))
-        hostingView.frame = NSRect(x: 0, y: 0, width: 160, height: 40)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 260, height: 60)
         
         window.contentView = hostingView
-        window.setContentSize(hostingView.fittingSize)
+        window.setContentSize(NSSize(width: 260, height: 60))
         
         positionWindow()
     }
@@ -131,7 +169,7 @@ final class FloatingIndicatorWindow: NSWindow {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         isMovableByWindowBackground = false
         hasShadow = false
-        ignoresMouseEvents = true // Click-through
+        ignoresMouseEvents = false
     }
 }
 

@@ -51,7 +51,7 @@ struct MenuBarView: View {
             }
             
             Spacer()
-            
+
             if viewModel.recordingState.isRecording {
                 recordingDuration
             }
