@@ -101,22 +101,35 @@ final class AppViewModel: ObservableObject {
     
     /// Called when hotkey is pressed down - start recording
     func handleHotkeyDown() {
-        switch recordingState {
-        case .idle, .error:
-            startRecording()
-        case .recording, .processing:
-            // Ignore - already recording or processing
-            break
+        switch settings.recordingTriggerMode {
+        case .holdToRecord:
+            switch recordingState {
+            case .idle, .error:
+                startRecording()
+            case .recording, .processing:
+                break
+            }
+        case .tapToToggle:
+            switch recordingState {
+            case .idle, .error:
+                startRecording()
+            case .recording:
+                Task { @MainActor in
+                    await stopRecordingAndTranscribe()
+                }
+            case .processing:
+                break
+            }
         }
     }
     
     /// Called when hotkey is released - stop recording and transcribe
     func handleHotkeyUp() async {
+        guard settings.recordingTriggerMode == .holdToRecord else { return }
         switch recordingState {
         case .recording:
             await stopRecordingAndTranscribe()
         case .idle, .error, .processing:
-            // Ignore
             break
         }
     }

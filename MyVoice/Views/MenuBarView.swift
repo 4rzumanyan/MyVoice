@@ -72,19 +72,32 @@ struct MenuBarView: View {
     private var actionButtons: some View {
         VStack(spacing: 4) {
             if viewModel.recordingState.isRecording {
-                MenuButton(
-                    title: "Cancel Recording",
-                    icon: "stop.fill",
-                    shortcut: "Release \(viewModel.settings.keyCombo.displayString)"
-                ) {
-                    viewModel.cancelRecording()
+                if viewModel.settings.recordingTriggerMode == .tapToToggle {
+                    MenuButton(
+                        title: "Stop Recording",
+                        icon: "stop.fill",
+                        shortcut: viewModel.settings.keyCombo.displayString
+                    ) {
+                        Task {
+                            await viewModel.stopRecordingAndTranscribe()
+                        }
+                    }
+                    .foregroundColor(.red)
+                } else {
+                    MenuButton(
+                        title: "Cancel Recording",
+                        icon: "stop.fill",
+                        shortcut: "Release \(viewModel.settings.keyCombo.displayString)"
+                    ) {
+                        viewModel.cancelRecording()
+                    }
+                    .foregroundColor(.red)
+                    
+                    Text("Release shortcut to transcribe")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                 }
-                .foregroundColor(.red)
-                
-                Text("Release shortcut to transcribe")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 4)
             } else if viewModel.recordingState.isProcessing {
                 HStack {
                     ProgressView()

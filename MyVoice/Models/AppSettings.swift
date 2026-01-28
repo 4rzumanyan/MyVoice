@@ -13,6 +13,7 @@ final class AppSettings: ObservableObject {
         static let apiKey = "geminiApiKey"
         static let geminiModel = "geminiModel"
         static let keyCombo = "keyboardShortcut"
+        static let recordingTriggerMode = "recordingTriggerMode"
         static let pasteBehavior = "pasteBehavior"
         static let showFloatingIndicator = "showFloatingIndicator"
         static let showNotification = "showNotification"
@@ -34,10 +35,17 @@ final class AppSettings: ObservableObject {
         }
     }
     
-    /// Keyboard shortcut for triggering recording (hold to record)
+    /// Keyboard shortcut for triggering recording
     @Published var keyCombo: KeyCombo {
         didSet {
             keyCombo.save(to: defaults, key: Keys.keyCombo)
+        }
+    }
+
+    /// How recording is triggered via the shortcut
+    @Published var recordingTriggerMode: RecordingTriggerMode {
+        didSet {
+            defaults.set(recordingTriggerMode.rawValue, forKey: Keys.recordingTriggerMode)
         }
     }
     
@@ -77,6 +85,13 @@ final class AppSettings: ObservableObject {
         }
         
         self.keyCombo = KeyCombo.load(from: defaults, key: Keys.keyCombo)
+
+        if let modeRaw = defaults.string(forKey: Keys.recordingTriggerMode),
+           let mode = RecordingTriggerMode(rawValue: modeRaw) {
+            self.recordingTriggerMode = mode
+        } else {
+            self.recordingTriggerMode = .holdToRecord
+        }
         
         if let pasteBehaviorRaw = defaults.string(forKey: Keys.pasteBehavior),
            let behavior = PasteBehavior(rawValue: pasteBehaviorRaw) {

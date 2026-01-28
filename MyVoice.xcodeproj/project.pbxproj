@@ -13,6 +13,7 @@
 
 		A1000009A1000009 /* PasteBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000AA100000A /* PasteBehavior.swift */; };
 		A100000BA100000B /* KeyCombo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000CA100000C /* KeyCombo.swift */; };
+		A1000031A1000031 /* RecordingTriggerMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032A1000032 /* RecordingTriggerMode.swift */; };
 		A100000DA100000D /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000EA100000E /* AppSettings.swift */; };
 		A100000FA100000F /* PermissionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010A1000010 /* PermissionsService.swift */; };
 		A1000011A1000011 /* AudioRecorderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000012A1000012 /* AudioRecorderService.swift */; };
@@ -35,6 +36,7 @@
 
 		A100000AA100000A /* PasteBehavior.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBehavior.swift; sourceTree = "<group>"; };
 		A100000CA100000C /* KeyCombo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCombo.swift; sourceTree = "<group>"; };
+		A1000032A1000032 /* RecordingTriggerMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingTriggerMode.swift; sourceTree = "<group>"; };
 		A100000EA100000E /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		A1000010A1000010 /* PermissionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsService.swift; sourceTree = "<group>"; };
 		A1000012A1000012 /* AudioRecorderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorderService.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				A1000006A1000006 /* RecordingState.swift */,
 				A100000AA100000A /* PasteBehavior.swift */,
 				A100000CA100000C /* KeyCombo.swift */,
+				A1000032A1000032 /* RecordingTriggerMode.swift */,
 				A1000027A1000027 /* GeminiModel.swift */,
 				A100000EA100000E /* AppSettings.swift */,
 			);
@@ -220,6 +223,7 @@
 				A1000005A1000005 /* RecordingState.swift in Sources */,
 				A1000009A1000009 /* PasteBehavior.swift in Sources */,
 				A100000BA100000B /* KeyCombo.swift in Sources */,
+				A1000031A1000031 /* RecordingTriggerMode.swift in Sources */,
 				A1000026A1000026 /* GeminiModel.swift in Sources */,
 				A100000DA100000D /* AppSettings.swift in Sources */,
 				A100000FA100000F /* PermissionsService.swift in Sources */,

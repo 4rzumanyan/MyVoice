@@ -60,12 +60,33 @@ struct SettingsView: View {
                     ShortcutRecorderView(keyCombo: $settings.keyCombo)
                         .frame(width: 180)
                 }
-                
-                Text("Hold the shortcut to record, release to transcribe")
+            } header: {
+                Text("Shortcut")
+            }
+
+            Section {
+                Picker("Recording Method", selection: $settings.recordingTriggerMode) {
+                    ForEach(RecordingTriggerMode.allCases) { mode in
+                        VStack(alignment: .leading) {
+                            Text(mode.displayName)
+                            Text(mode.description)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .tag(mode)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+            } header: {
+                Text("Recording Behavior")
+            }
+            
+            Section {
+                Text(settings.recordingTriggerMode.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
             } header: {
-                Text("Push-to-Talk Shortcut")
+                Text("Hint")
             }
         }
         .formStyle(.grouped)
