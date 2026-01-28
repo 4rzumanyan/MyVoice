@@ -81,13 +81,6 @@ struct SettingsView: View {
                 Text("Recording Behavior")
             }
             
-            Section {
-                Text(settings.recordingTriggerMode.description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            } header: {
-                Text("Hint")
-            }
         }
         .formStyle(.grouped)
         .padding()
