@@ -23,7 +23,7 @@ struct SettingsView: View {
                     Label("Permissions", systemImage: "lock.shield")
                 }
         }
-        .frame(width: 480, height: 360)
+        .frame(width: 480, height: 400)
     }
     
     // MARK: - General Tab
@@ -31,12 +31,7 @@ struct SettingsView: View {
     private var generalTab: some View {
         Form {
             Section {
-                SecureField("Gemini API Key", text: $settings.apiKey)
-                    .textFieldStyle(.roundedBorder)
-                
-                Text("Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                APIKeyEditorView(apiKey: $settings.apiKey)
             } header: {
                 Text("API Configuration")
             }
@@ -148,6 +143,264 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+}
+
+// MARK: - API Key Editor View
+
+struct APIKeyEditorView: View {
+    @Binding var apiKey: String
+    
+    @State private var isEditing = false
+    @State private var editingKey = ""
+    @State private var isValidating = false
+    @State private var validationResult: ValidationResult?
+    
+    enum ValidationResult {
+        case valid
+        case invalid(String)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if isEditing {
+                // Edit mode
+                editModeView
+            } else {
+                // Display mode
+                displayModeView
+            }
+            
+            // Help text
+            Text("Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Display Mode
+    
+    private var displayModeView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Gemini API Key")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 8) {
+                    if apiKey.isEmpty {
+                        Text("Not configured")
+                            .foregroundColor(.red)
+                            .font(.system(.body, design: .monospaced))
+                    } else {
+                        Text(maskedApiKey)
+                            .font(.system(.body, design: .monospaced))
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Button(apiKey.isEmpty ? "Add Key" : "Edit") {
+                editingKey = apiKey
+                isEditing = true
+                validationResult = nil
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+    
+    // MARK: - Edit Mode
+    
+    private var editModeView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Gemini API Key")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                SecureField("Enter your API key", text: $editingKey)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+            }
+            
+            // Validation result
+            if let result = validationResult {
+                validationResultView(result)
+            }
+            
+            // Buttons
+            HStack {
+                Button("Cancel") {
+                    isEditing = false
+                    editingKey = ""
+                    validationResult = nil
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
+                
+                Button("Test Connection") {
+                    Task {
+                        await validateApiKey()
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(editingKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isValidating)
+                
+                Button("Save") {
+                    saveApiKey()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(editingKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isValidating)
+            }
+            
+            if isValidating {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                    Text("Validating API key...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+    }
+    
+    @ViewBuilder
+    private func validationResultView(_ result: ValidationResult) -> some View {
+        switch result {
+        case .valid:
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text("API key is valid!")
+                    .foregroundColor(.green)
+            }
+            .font(.caption)
+        case .invalid(let message):
+            HStack(alignment: .top) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.red)
+                Text(message)
+                    .foregroundColor(.red)
+            }
+            .font(.caption)
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var maskedApiKey: String {
+        let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > 5 else {
+            return String(repeating: "*", count: trimmed.count)
+        }
+        
+        let visibleSuffix = String(trimmed.suffix(5))
+        let maskedLength = min(trimmed.count - 5, 20) // Show max 20 asterisks
+        let masked = String(repeating: "*", count: maskedLength)
+        
+        return masked + visibleSuffix
+    }
+    
+    // MARK: - Actions
+    
+    private func saveApiKey() {
+        let trimmed = editingKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        apiKey = trimmed
+        isEditing = false
+        editingKey = ""
+        validationResult = nil
+    }
+    
+    private func validateApiKey() async {
+        let trimmed = editingKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        isValidating = true
+        validationResult = nil
+        
+        // Test the API key with a simple request
+        let result = await testGeminiApiKey(trimmed)
+        
+        await MainActor.run {
+            isValidating = false
+            validationResult = result
+        }
+    }
+    
+    private func testGeminiApiKey(_ key: String) async -> ValidationResult {
+        // Use the models.list endpoint to validate the API key
+        // This is a lightweight call that just lists available models
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models?key=\(key)"
+        
+        guard let url = URL(string: urlString) else {
+            return .invalid("Invalid API key format")
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 10
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                switch httpResponse.statusCode {
+                case 200:
+                    return .valid
+                case 400:
+                    // Try to parse error message
+                    if let errorInfo = parseGeminiError(from: data) {
+                        return .invalid(errorInfo)
+                    }
+                    return .invalid("Bad request. Please check your API key.")
+                case 401, 403:
+                    return .invalid("Invalid API key. Please check that you copied the key correctly.")
+                case 404:
+                    return .invalid("API endpoint not found. The API may have changed.")
+                case 429:
+                    return .invalid("Rate limited. Your API key is valid but you've exceeded the quota.")
+                default:
+                    return .invalid("Unexpected error (HTTP \(httpResponse.statusCode))")
+                }
+            }
+            
+            return .invalid("Could not validate API key")
+        } catch let error as URLError {
+            switch error.code {
+            case .notConnectedToInternet:
+                return .invalid("No internet connection. Please check your network.")
+            case .timedOut:
+                return .invalid("Connection timed out. Please try again.")
+            default:
+                return .invalid("Network error: \(error.localizedDescription)")
+            }
+        } catch {
+            return .invalid("Error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func parseGeminiError(from data: Data) -> String? {
+        struct ErrorResponse: Decodable {
+            let error: ErrorDetail
+            struct ErrorDetail: Decodable {
+                let message: String
+            }
+        }
+        
+        if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+            return errorResponse.error.message
+        }
+        return nil
     }
 }
 
