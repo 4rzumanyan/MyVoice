@@ -14,6 +14,7 @@ final class AppViewModel: ObservableObject {
     @Published var showingSettings = false
     @Published var showingError = false
     @Published var errorMessage = ""
+    @Published var recordingDuration: TimeInterval = 0.0
     
     // MARK: - Services
     
@@ -60,6 +61,13 @@ final class AppViewModel: ObservableObject {
                     self.hotkeyService.refreshMonitors()
                 }
                 self.previousAccessibilityState = isGranted
+            }
+            .store(in: &cancellables)
+
+        audioRecorder.$recordingDuration
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] duration in
+                self?.recordingDuration = duration
             }
             .store(in: &cancellables)
     }

@@ -60,7 +60,7 @@ struct MenuBarView: View {
     }
     
     private var recordingDuration: some View {
-        Text(formatDuration(viewModel.audioRecorder.recordingDuration))
+        Text(formatDuration(viewModel.recordingDuration))
             .font(.system(.caption, design: .monospaced))
             .foregroundColor(.red)
             .padding(.horizontal, 8)
