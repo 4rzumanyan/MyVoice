@@ -25,8 +25,16 @@ struct TranscriptionPrompt: Identifiable, Codable, Equatable {
         isBuiltIn: true
     )
     
+    /// Prompt engineer - convert spoken intent into a strong AI prompt
+    static let promptEngineer = TranscriptionPrompt(
+        id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
+        name: "Prompt Engineer",
+        promptText: "Listen to this audio and convert it into a clear, token-efficient AI prompt. Act as an expert prompt engineer. Use a structured format (bullet points or numbered steps) when helpful. Adapt detail level to the request complexity, remove filler words, and focus on the core task and desired outcome. Output ONLY the final prompt text with no headers, labels, or explanations. If the audio is empty or unclear, return an empty string.",
+        isBuiltIn: true
+    )
+    
     /// All built-in prompts
-    static let builtInPrompts: [TranscriptionPrompt] = [transcribe, professional]
+    static let builtInPrompts: [TranscriptionPrompt] = [transcribe, professional, promptEngineer]
     
     /// The default prompt used when custom prompts are disabled
     static let defaultPrompt = transcribe
@@ -54,6 +62,8 @@ extension TranscriptionPrompt {
             return "Raw transcription as spoken"
         case "00000000-0000-0000-0000-000000000002":
             return "Formal business tone"
+        case "00000000-0000-0000-0000-000000000003":
+            return "Turn speech into a strong AI prompt"
         default:
             return "Custom prompt"
         }
