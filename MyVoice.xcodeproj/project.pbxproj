@@ -28,6 +28,7 @@
 		A1000026A1000026 /* GeminiModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027A1000027 /* GeminiModel.swift */; };
 		A1000028A1000028 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000029A1000029 /* OnboardingView.swift */; };
 		A1000033A1000033 /* TranscriptionPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000034A1000034 /* TranscriptionPrompt.swift */; };
+		A1000035A1000035 /* OutputLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000036A1000036 /* OutputLanguage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +56,7 @@
 		A1000027A1000027 /* GeminiModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModel.swift; sourceTree = "<group>"; };
 		A1000029A1000029 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A1000034A1000034 /* TranscriptionPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionPrompt.swift; sourceTree = "<group>"; };
+		A1000036A1000036 /* OutputLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputLanguage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				A1000032A1000032 /* RecordingTriggerMode.swift */,
 				A1000027A1000027 /* GeminiModel.swift */,
 				A1000034A1000034 /* TranscriptionPrompt.swift */,
+				A1000036A1000036 /* OutputLanguage.swift */,
 				A100000EA100000E /* AppSettings.swift */,
 			);
 			path = Models;
@@ -241,6 +244,7 @@
 				A1000021A1000021 /* FloatingIndicatorView.swift in Sources */,
 				A1000028A1000028 /* OnboardingView.swift in Sources */,
 				A1000033A1000033 /* TranscriptionPrompt.swift in Sources */,
+				A1000035A1000035 /* OutputLanguage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

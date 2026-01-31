@@ -131,6 +131,10 @@ struct FloatingIndicatorView: View {
         if settingsUsesCustomPrompt {
             messages.append("Applying the \"\(viewModel.settings.activePrompt.name)\" prompt...")
         }
+        
+        if settingsUsesTranslation {
+            messages.append("Translating to \(viewModel.settings.outputLanguage.name)...")
+        }
 
         messages.append(contentsOf: [
             "Cleaning up text...",
@@ -151,6 +155,11 @@ struct FloatingIndicatorView: View {
     private var settingsUsesCustomPrompt: Bool {
         viewModel.settings.customPromptsEnabled &&
         viewModel.settings.activePrompt.id != TranscriptionPrompt.defaultPrompt.id
+    }
+    
+    private var settingsUsesTranslation: Bool {
+        viewModel.settings.customPromptsEnabled &&
+        viewModel.settings.translateOutputEnabled
     }
 }
 

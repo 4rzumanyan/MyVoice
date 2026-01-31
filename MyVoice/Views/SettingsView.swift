@@ -107,6 +107,23 @@ struct SettingsView: View {
             }
             
             Section {
+                Toggle("Translate output", isOn: $settings.translateOutputEnabled)
+                
+                Picker("Language", selection: $settings.outputLanguageCode) {
+                    ForEach(OutputLanguage.allLanguages) { language in
+                        Text(language.displayName)
+                            .tag(language.code)
+                    }
+                }
+                .disabled(!settings.translateOutputEnabled)
+            } header: {
+                Text("Output Language")
+            } footer: {
+                Text("When enabled, the transcription will be translated to the selected language.")
+            }
+            .disabled(!settings.customPromptsEnabled)
+            
+            Section {
                 ForEach(TranscriptionPrompt.builtInPrompts) { prompt in
                     PromptRow(
                         prompt: prompt,

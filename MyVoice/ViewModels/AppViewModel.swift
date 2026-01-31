@@ -187,7 +187,7 @@ final class AppViewModel: ObservableObject {
                 audioFileURL: fileURL,
                 apiKey: settings.apiKey,
                 model: settings.geminiModel,
-                prompt: settings.activePrompt.promptText
+                prompt: settings.finalPrompt
             )
             
             // Delete the temporary file

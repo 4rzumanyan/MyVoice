@@ -20,6 +20,8 @@ final class AppSettings: ObservableObject {
         static let customPromptsEnabled = "customPromptsEnabled"
         static let selectedPromptId = "selectedPromptId"
         static let customPrompts = "customPrompts"
+        static let translateOutputEnabled = "translateOutputEnabled"
+        static let outputLanguageCode = "outputLanguageCode"
     }
     
     // MARK: - Published Properties
@@ -96,6 +98,20 @@ final class AppSettings: ObservableObject {
         }
     }
     
+    /// Whether to translate output to a specific language
+    @Published var translateOutputEnabled: Bool {
+        didSet {
+            defaults.set(translateOutputEnabled, forKey: Keys.translateOutputEnabled)
+        }
+    }
+    
+    /// Selected output language code
+    @Published var outputLanguageCode: String {
+        didSet {
+            defaults.set(outputLanguageCode, forKey: Keys.outputLanguageCode)
+        }
+    }
+    
     // MARK: - Initialization
     
     private init() {
@@ -155,6 +171,10 @@ final class AppSettings: ObservableObject {
         } else {
             self.customPrompts = []
         }
+        
+        // Translate output settings - default to disabled, English
+        self.translateOutputEnabled = defaults.bool(forKey: Keys.translateOutputEnabled)
+        self.outputLanguageCode = defaults.string(forKey: Keys.outputLanguageCode) ?? OutputLanguage.english.code
     }
     
     // MARK: - Validation
@@ -210,5 +230,27 @@ final class AppSettings: ObservableObject {
             customPrompts[index].name = name
             customPrompts[index].promptText = promptText
         }
+    }
+    
+    // MARK: - Language Helpers
+    
+    /// Get the currently selected output language
+    var outputLanguage: OutputLanguage {
+        OutputLanguage.language(forCode: outputLanguageCode)
+    }
+    
+    /// Get the final prompt with language instruction if enabled
+    var finalPrompt: String {
+        guard customPromptsEnabled else {
+            return TranscriptionPrompt.defaultPrompt.promptText
+        }
+        
+        var prompt = activePrompt.promptText
+        
+        if translateOutputEnabled {
+            prompt += " IMPORTANT: Your response MUST be written entirely in \(outputLanguage.name). Translate the content to \(outputLanguage.name) if the spoken language is different."
+        }
+        
+        return prompt
     }
 }
