@@ -27,6 +27,7 @@
 		A1000021A1000021 /* FloatingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000022A1000022 /* FloatingIndicatorView.swift */; };
 		A1000026A1000026 /* GeminiModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027A1000027 /* GeminiModel.swift */; };
 		A1000028A1000028 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000029A1000029 /* OnboardingView.swift */; };
+		A1000033A1000033 /* TranscriptionPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000034A1000034 /* TranscriptionPrompt.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		A1000025A1000025 /* MyVoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyVoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000027A1000027 /* GeminiModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiModel.swift; sourceTree = "<group>"; };
 		A1000029A1000029 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A1000034A1000034 /* TranscriptionPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionPrompt.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 				A100000CA100000C /* KeyCombo.swift */,
 				A1000032A1000032 /* RecordingTriggerMode.swift */,
 				A1000027A1000027 /* GeminiModel.swift */,
+				A1000034A1000034 /* TranscriptionPrompt.swift */,
 				A100000EA100000E /* AppSettings.swift */,
 			);
 			path = Models;
@@ -237,6 +240,7 @@
 				A100001FA100001F /* SettingsView.swift in Sources */,
 				A1000021A1000021 /* FloatingIndicatorView.swift in Sources */,
 				A1000028A1000028 /* OnboardingView.swift in Sources */,
+				A1000033A1000033 /* TranscriptionPrompt.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

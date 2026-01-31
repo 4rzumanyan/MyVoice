@@ -13,6 +13,11 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
             
+            promptsTab
+                .tabItem {
+                    Label("Prompts", systemImage: "text.bubble")
+                }
+            
             outputTab
                 .tabItem {
                     Label("Output", systemImage: "doc.on.clipboard")
@@ -23,7 +28,7 @@ struct SettingsView: View {
                     Label("Permissions", systemImage: "lock.shield")
                 }
         }
-        .frame(width: 480, height: 400)
+        .frame(width: 480, height: 520)
     }
     
     // MARK: - General Tab
@@ -84,6 +89,94 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+    
+    // MARK: - Prompts Tab
+    
+    @State private var showingAddPromptSheet = false
+    @State private var editingPrompt: TranscriptionPrompt? = nil
+    
+    private var promptsTab: some View {
+        Form {
+            Section {
+                Toggle("Enable Custom Prompts", isOn: $settings.customPromptsEnabled)
+                
+                Text("When enabled, you can choose how the AI processes your speech. When disabled, the app will transcribe exactly what you say.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Section {
+                ForEach(TranscriptionPrompt.builtInPrompts) { prompt in
+                    PromptRow(
+                        prompt: prompt,
+                        isSelected: settings.selectedPromptId == prompt.id,
+                        isEnabled: settings.customPromptsEnabled,
+                        onSelect: {
+                            settings.selectedPromptId = prompt.id
+                        },
+                        onEdit: nil,
+                        onDelete: nil
+                    )
+                }
+            } header: {
+                Text("Built-in Prompts")
+            }
+            .disabled(!settings.customPromptsEnabled)
+            
+            Section {
+                if settings.customPrompts.isEmpty {
+                    Text("No custom prompts yet")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                } else {
+                    ForEach(settings.customPrompts) { prompt in
+                        PromptRow(
+                            prompt: prompt,
+                            isSelected: settings.selectedPromptId == prompt.id,
+                            isEnabled: settings.customPromptsEnabled,
+                            onSelect: {
+                                settings.selectedPromptId = prompt.id
+                            },
+                            onEdit: {
+                                editingPrompt = prompt
+                            },
+                            onDelete: {
+                                settings.deleteCustomPrompt(id: prompt.id)
+                            }
+                        )
+                    }
+                }
+                
+                Button {
+                    showingAddPromptSheet = true
+                } label: {
+                    Label("Add Custom Prompt", systemImage: "plus.circle")
+                }
+                .disabled(!settings.customPromptsEnabled)
+            } header: {
+                Text("Custom Prompts")
+            }
+            .disabled(!settings.customPromptsEnabled)
+        }
+        .formStyle(.grouped)
+        .padding()
+        .sheet(isPresented: $showingAddPromptSheet) {
+            PromptEditorSheet(
+                mode: .add,
+                onSave: { name, promptText in
+                    settings.addCustomPrompt(name: name, promptText: promptText)
+                }
+            )
+        }
+        .sheet(item: $editingPrompt) { prompt in
+            PromptEditorSheet(
+                mode: .edit(prompt),
+                onSave: { name, promptText in
+                    settings.updateCustomPrompt(id: prompt.id, name: name, promptText: promptText)
+                }
+            )
+        }
     }
     
     // MARK: - Output Tab
@@ -466,6 +559,152 @@ struct PermissionRow: View {
             Image(systemName: "questionmark.circle.fill")
                 .foregroundColor(.orange)
         }
+    }
+}
+
+// MARK: - Prompt Row
+
+struct PromptRow: View {
+    let prompt: TranscriptionPrompt
+    let isSelected: Bool
+    let isEnabled: Bool
+    let onSelect: () -> Void
+    let onEdit: (() -> Void)?
+    let onDelete: (() -> Void)?
+    
+    var body: some View {
+        HStack {
+            Button(action: onSelect) {
+                HStack {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isSelected ? .accentColor : .secondary)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(prompt.name)
+                            .fontWeight(isSelected ? .medium : .regular)
+                        
+                        Text(prompt.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            
+            Spacer()
+            
+            if let onEdit = onEdit {
+                Button("Edit") {
+                    onEdit()
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+            }
+            
+            if let onDelete = onDelete {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(.vertical, 4)
+        .opacity(isEnabled ? 1.0 : 0.5)
+    }
+}
+
+// MARK: - Prompt Editor Sheet
+
+struct PromptEditorSheet: View {
+    enum Mode {
+        case add
+        case edit(TranscriptionPrompt)
+    }
+    
+    let mode: Mode
+    let onSave: (String, String) -> Void
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var name: String = ""
+    @State private var promptText: String = ""
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Text(isEditing ? "Edit Prompt" : "New Prompt")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("Save") {
+                    onSave(name.trimmingCharacters(in: .whitespacesAndNewlines), 
+                           promptText.trimmingCharacters(in: .whitespacesAndNewlines))
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!isValid)
+            }
+            .padding()
+            
+            Divider()
+            
+            // Form
+            Form {
+                Section {
+                    TextField("Prompt Name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                } header: {
+                    Text("Name")
+                } footer: {
+                    Text("A short name to identify this prompt")
+                }
+                
+                Section {
+                    TextEditor(text: $promptText)
+                        .font(.system(.body, design: .monospaced))
+                        .frame(minHeight: 150)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        )
+                } header: {
+                    Text("Prompt Text")
+                } footer: {
+                    Text("Instructions for how the AI should process your speech. The audio will be sent along with this prompt.")
+                }
+            }
+            .formStyle(.grouped)
+            .padding()
+        }
+        .frame(width: 500, height: 400)
+        .onAppear {
+            if case .edit(let prompt) = mode {
+                name = prompt.name
+                promptText = prompt.promptText
+            }
+        }
+    }
+    
+    private var isEditing: Bool {
+        if case .edit = mode { return true }
+        return false
+    }
+    
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 

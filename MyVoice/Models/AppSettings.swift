@@ -17,6 +17,9 @@ final class AppSettings: ObservableObject {
         static let pasteBehavior = "pasteBehavior"
         static let showFloatingIndicator = "showFloatingIndicator"
         static let showNotification = "showNotification"
+        static let customPromptsEnabled = "customPromptsEnabled"
+        static let selectedPromptId = "selectedPromptId"
+        static let customPrompts = "customPrompts"
     }
     
     // MARK: - Published Properties
@@ -70,6 +73,29 @@ final class AppSettings: ObservableObject {
         }
     }
     
+    /// Whether custom prompts feature is enabled
+    @Published var customPromptsEnabled: Bool {
+        didSet {
+            defaults.set(customPromptsEnabled, forKey: Keys.customPromptsEnabled)
+        }
+    }
+    
+    /// Currently selected prompt ID
+    @Published var selectedPromptId: UUID {
+        didSet {
+            defaults.set(selectedPromptId.uuidString, forKey: Keys.selectedPromptId)
+        }
+    }
+    
+    /// User-created custom prompts
+    @Published var customPrompts: [TranscriptionPrompt] {
+        didSet {
+            if let data = try? JSONEncoder().encode(customPrompts) {
+                defaults.set(data, forKey: Keys.customPrompts)
+            }
+        }
+    }
+    
     // MARK: - Initialization
     
     private init() {
@@ -110,6 +136,25 @@ final class AppSettings: ObservableObject {
             defaults.set(false, forKey: Keys.showNotification)
         }
         self.showNotification = defaults.bool(forKey: Keys.showNotification)
+        
+        // Custom prompts settings - default to disabled
+        self.customPromptsEnabled = defaults.bool(forKey: Keys.customPromptsEnabled)
+        
+        // Load selected prompt ID
+        if let idString = defaults.string(forKey: Keys.selectedPromptId),
+           let id = UUID(uuidString: idString) {
+            self.selectedPromptId = id
+        } else {
+            self.selectedPromptId = TranscriptionPrompt.defaultPrompt.id
+        }
+        
+        // Load custom prompts
+        if let data = defaults.data(forKey: Keys.customPrompts),
+           let prompts = try? JSONDecoder().decode([TranscriptionPrompt].self, from: data) {
+            self.customPrompts = prompts
+        } else {
+            self.customPrompts = []
+        }
     }
     
     // MARK: - Validation
@@ -120,5 +165,50 @@ final class AppSettings: ObservableObject {
     
     var hasValidConfiguration: Bool {
         isApiKeyValid
+    }
+    
+    // MARK: - Prompt Helpers
+    
+    /// Get all available prompts (built-in + custom)
+    var allPrompts: [TranscriptionPrompt] {
+        TranscriptionPrompt.builtInPrompts + customPrompts
+    }
+    
+    /// Get the currently active prompt based on settings
+    var activePrompt: TranscriptionPrompt {
+        guard customPromptsEnabled else {
+            return TranscriptionPrompt.defaultPrompt
+        }
+        
+        // Find the selected prompt from all available prompts
+        if let prompt = allPrompts.first(where: { $0.id == selectedPromptId }) {
+            return prompt
+        }
+        
+        // Fallback to default if selected prompt not found
+        return TranscriptionPrompt.defaultPrompt
+    }
+    
+    /// Add a new custom prompt
+    func addCustomPrompt(name: String, promptText: String) {
+        let newPrompt = TranscriptionPrompt.createCustom(name: name, promptText: promptText)
+        customPrompts.append(newPrompt)
+    }
+    
+    /// Delete a custom prompt
+    func deleteCustomPrompt(id: UUID) {
+        customPrompts.removeAll { $0.id == id }
+        // If deleted prompt was selected, reset to default
+        if selectedPromptId == id {
+            selectedPromptId = TranscriptionPrompt.defaultPrompt.id
+        }
+    }
+    
+    /// Update a custom prompt
+    func updateCustomPrompt(id: UUID, name: String, promptText: String) {
+        if let index = customPrompts.firstIndex(where: { $0.id == id }) {
+            customPrompts[index].name = name
+            customPrompts[index].promptText = promptText
+        }
     }
 }

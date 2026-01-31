@@ -6,6 +6,8 @@ struct FloatingIndicatorView: View {
     @ObservedObject var viewModel: AppViewModel
     
     @State private var pulseAnimation = false
+    @State private var processingMessageIndex = 0
+    private let processingMessageTimer = Timer.publish(every: 2.5, on: .main, in: .common).autoconnect()
     
     var body: some View {
         HStack(spacing: 12) {
@@ -50,9 +52,11 @@ struct FloatingIndicatorView: View {
                         .scaleEffect(pulseAnimation ? 1.2 : 1.0)
                         .opacity(pulseAnimation ? 0.7 : 1.0)
 
-                    Text("Transcribing...")
+                    Text(currentProcessingMessage)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
                     ProgressView()
                         .scaleEffect(0.8)
@@ -87,6 +91,16 @@ struct FloatingIndicatorView: View {
                     pulseAnimation = true
                 }
             }
+            if !viewModel.recordingState.isProcessing {
+                processingMessageIndex = 0
+            }
+        }
+        .onReceive(processingMessageTimer) { _ in
+            guard viewModel.recordingState.isProcessing else { return }
+            let maxIndex = max(0, processingMessages.count - 1)
+            if processingMessageIndex < maxIndex {
+                processingMessageIndex += 1
+            }
         }
     }
     
@@ -105,6 +119,38 @@ struct FloatingIndicatorView: View {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    private var processingMessages: [String] {
+        var messages = [
+            "Uploading audio...",
+            "Listening carefully...",
+            "Extracting words..."
+        ]
+
+        if settingsUsesCustomPrompt {
+            messages.append("Applying the \"\(viewModel.settings.activePrompt.name)\" prompt...")
+        }
+
+        messages.append(contentsOf: [
+            "Cleaning up text...",
+            "Polishing punctuation...",
+            "Finalizing response...",
+            "Almost there..."
+        ])
+
+        return messages
+    }
+
+    private var currentProcessingMessage: String {
+        let messages = processingMessages
+        let index = min(processingMessageIndex, messages.count - 1)
+        return messages[index]
+    }
+
+    private var settingsUsesCustomPrompt: Bool {
+        viewModel.settings.customPromptsEnabled &&
+        viewModel.settings.activePrompt.id != TranscriptionPrompt.defaultPrompt.id
     }
 }
 

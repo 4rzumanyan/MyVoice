@@ -186,7 +186,8 @@ final class AppViewModel: ObservableObject {
             let result = try await geminiService.transcribe(
                 audioFileURL: fileURL,
                 apiKey: settings.apiKey,
-                model: settings.geminiModel
+                model: settings.geminiModel,
+                prompt: settings.activePrompt.promptText
             )
             
             // Delete the temporary file

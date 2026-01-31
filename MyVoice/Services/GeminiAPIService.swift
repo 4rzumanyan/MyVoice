@@ -67,8 +67,9 @@ final class GeminiAPIService {
     ///   - fileURL: URL to the WAV audio file
     ///   - apiKey: Gemini API key
     ///   - model: The Gemini model to use for transcription
+    ///   - prompt: The prompt to use for transcription/processing
     /// - Returns: TranscriptionResult with the transcribed text
-    func transcribe(audioFileURL: URL, apiKey: String, model: GeminiModel) async throws -> TranscriptionResult {
+    func transcribe(audioFileURL: URL, apiKey: String, model: GeminiModel, prompt: String) async throws -> TranscriptionResult {
         let totalStart = CFAbsoluteTimeGetCurrent()
         
         // Validate API key
@@ -121,11 +122,15 @@ final class GeminiAPIService {
                         ),
                         GeminiPart(
                             inlineData: nil,
-                            text: "Transcribe this audio exactly as spoken. Return only the transcription text, nothing else. If the audio is empty or unclear, return an empty string."
+                            text: prompt
                         )
                     ]
                 )
-            ]
+            ],
+            generationConfig: GenerationConfig(
+                maxOutputTokens: 2048,
+                temperature: 0.1  // Low temperature for more consistent/deterministic output
+            )
         )
         
         let encoder = JSONEncoder()
@@ -220,6 +225,12 @@ final class GeminiAPIService {
 
 private struct GeminiRequest: Encodable {
     let contents: [GeminiContent]
+    let generationConfig: GenerationConfig?
+}
+
+private struct GenerationConfig: Encodable {
+    let maxOutputTokens: Int?
+    let temperature: Double?
 }
 
 private struct GeminiContent: Encodable {
