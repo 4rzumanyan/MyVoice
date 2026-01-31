@@ -83,15 +83,24 @@ struct MenuBarView: View {
                         }
                     }
                     .foregroundColor(.red)
+                    
+                    MenuButton(
+                        title: "Cancel",
+                        icon: "xmark.circle",
+                        shortcut: nil
+                    ) {
+                        viewModel.cancelRecording()
+                    }
+                    .foregroundColor(.secondary)
                 } else {
                     MenuButton(
                         title: "Cancel Recording",
-                        icon: "stop.fill",
+                        icon: "xmark.circle",
                         shortcut: "Release \(viewModel.settings.keyCombo.displayString)"
                     ) {
                         viewModel.cancelRecording()
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(.secondary)
                     
                     Text("Release shortcut to transcribe")
                         .font(.caption)
