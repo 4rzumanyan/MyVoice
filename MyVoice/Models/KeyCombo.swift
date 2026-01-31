@@ -12,8 +12,11 @@ struct KeyCombo: Codable, Equatable {
     /// Special key code indicating this is a modifier-only shortcut
     static let modifierOnlyKeyCode: UInt16 = 0xFFFF
     
-    /// Default shortcut: Option + Space
-    static let defaultCombo = KeyCombo(keyCode: UInt16(kVK_Space), modifiers: NSEvent.ModifierFlags.option.rawValue)
+    /// Default shortcut: Control + Option + Command (modifier-only)
+    static let defaultCombo = KeyCombo(
+        keyCode: modifierOnlyKeyCode,
+        modifiers: NSEvent.ModifierFlags([.control, .option, .command]).rawValue
+    )
     
     /// Command-only shortcut
     static let commandOnly = KeyCombo(keyCode: modifierOnlyKeyCode, modifiers: NSEvent.ModifierFlags.command.rawValue)

@@ -90,7 +90,7 @@ final class AppSettings: ObservableObject {
            let mode = RecordingTriggerMode(rawValue: modeRaw) {
             self.recordingTriggerMode = mode
         } else {
-            self.recordingTriggerMode = .holdToRecord
+            self.recordingTriggerMode = .tapToToggle
         }
         
         if let pasteBehaviorRaw = defaults.string(forKey: Keys.pasteBehavior),
@@ -107,7 +107,7 @@ final class AppSettings: ObservableObject {
         self.showFloatingIndicator = defaults.bool(forKey: Keys.showFloatingIndicator)
         
         if defaults.object(forKey: Keys.showNotification) == nil {
-            defaults.set(true, forKey: Keys.showNotification)
+            defaults.set(false, forKey: Keys.showNotification)
         }
         self.showNotification = defaults.bool(forKey: Keys.showNotification)
     }
